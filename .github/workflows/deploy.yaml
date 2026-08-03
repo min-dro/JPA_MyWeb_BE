@@ -91,8 +91,8 @@ jobs:
             fi
 
             # 6) 환경변수 셋팅 (application.properties 의 ${변수명} 을 채우는 것)
-            # Secrets 에 DB_HOST, DB_USERNAME, DB_PASSWORD, JWT_SECRET 등록했었음!!
-            export DB_HOST='${{ secrets.DB_HOST }}'
+            # Secrets 에 RDS_HOST, DB_USERNAME, DB_PASSWORD, JWT_SECRET 등록했었음!!
+            export RDS_HOST='${{ secrets.RDS_HOST }}'
             export DB_USERNAME='${{ secrets.DB_USERNAME }}'
             export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
             export JWT_SECRET='${{ secrets.JWT_SECRET }}'
