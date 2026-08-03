@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="noticeMapper">
+	
+	<!--
+		NOTICE 테이블로부터 조회된 ResultSet 을
+		자바의 Notice VO 클래스로 가공해주는 ResultMap
+	-->
+	<resultMap id="noticeResultSet" type="notice">
+		<id column="NOTICE_NO" property="noticeNo" />
+		<result column="NOTICE_TITLE" property="noticeTitle" />
+		<result column="NOTICE_WRITER" property="noticeWriter" />
+		<result column="CREATE_DATE" property="createDate" />
+		
+		<result column="NOTICE_CONTENT" property="noticeContent" />
+	</resultMap>
+	
+	<!-- 공지사항 목록 조회용 쿼리문 -->
+	<select id="selectNoticeList" resultMap="noticeResultSet">
+		SELECT NOTICE_NO
+			 , NOTICE_TITLE
+			 , NOTICE_WRITER
+			 , CREATE_DATE
+		  FROM NOTICE
+		 WHERE STATUS = 'Y'
+		 ORDER BY NOTICE_NO DESC
+	</select>
+	
+	<!-- 공지사항 작성용 쿼리문 -->
+	<insert id="insertNotice" parameterType="notice">
+	<!--
+		INSERT INTO NOTICE(NOTICE_NO
+						 , NOTICE_TITLE
+						 , NOTICE_WRITER
+						 , NOTICE_CONTENT)
+					VALUES(SEQ_NNO.NEXTVAL
+						 , #{noticeTitle}
+						 , #{noticeWriter}
+						 , #{noticeContent})
+	-->
+		INSERT INTO NOTICE(NOTICE_TITLE
+						 , NOTICE_WRITER
+						 , NOTICE_CONTENT)
+					VALUES(#{noticeTitle}
+						 , #{noticeWriter}
+						 , #{noticeContent})
+	</insert>
+	
+	<!-- 공지사항 상세조회용 쿼리문 -->
+	<select id="selectNotice" parameterType="_int" resultMap="noticeResultSet">
+		SELECT NOTICE_NO
+			 , NOTICE_TITLE
+			 , NOTICE_WRITER
+			 , NOTICE_CONTENT
+			 , CREATE_DATE
+		  FROM NOTICE
+		 WHERE NOTICE_NO = #{noticeNo}
+		   AND STATUS = 'Y'
+	</select>
+	
+	<!-- 공지사항 수정용 쿼리문 -->
+	<update id="updateNotice" parameterType="notice">
+		UPDATE NOTICE
+		   SET NOTICE_TITLE = #{noticeTitle}
+		   	 , NOTICE_CONTENT = #{noticeContent}
+		 WHERE NOTICE_NO = #{noticeNo}
+		   AND STATUS = 'Y'
+	</update>
+	
+	<!-- 공지사항 삭제용 쿼리문 -->
+	<update id="deleteNotice" parameterType="_int">
+		UPDATE NOTICE
+		   SET STATUS = 'N'
+		 WHERE NOTICE_NO = #{noticeNo}
+		   AND STATUS = 'Y'
+	</update>
+	
+</mapper>

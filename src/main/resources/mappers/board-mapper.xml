@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="boardMapper">
+	
+	<!--
+		BOARD 테이블로부터 조회된 ResultSet 을
+		자바의 Board VO 클래스로 가공해주는 ResultMap
+	-->
+	<resultMap id="boardResultSet" type="board">
+		<id column="BOARD_NO" property="boardNo" />
+		<result column="BOARD_TITLE" property="boardTitle" />
+		<result column="BOARD_WRITER" property="boardWriter" />
+		<result column="COUNT" property="count" />
+		<result column="CREATE_DATE" property="createDate" />
+		<result column="ORIGIN_NAME" property="originName" />
+		
+		<result column="BOARD_CONTENT" property="boardContent" />
+		<result column="CHANGE_NAME" property="changeName" />
+	</resultMap>
+	
+	<!-- 일반게시글의 총 개수 세올 쿼리문 -->
+	<select id="selectListCount" resultType="_int">
+		SELECT COUNT(*)
+		  FROM BOARD
+		 WHERE STATUS = 'Y'
+	</select>
+	
+	<!-- 일반게시글 목록 조회용 쿼리문 -->
+	<select id="selectBoardList" resultMap="boardResultSet">
+		SELECT BOARD_NO
+			 , BOARD_TITLE
+			 , BOARD_WRITER
+			 , COUNT
+			 , CREATE_DATE
+			 , ORIGIN_NAME
+		  FROM BOARD
+		 WHERE STATUS = 'Y'
+		 ORDER BY BOARD_NO DESC
+	</select>
+	
+	<!-- 검색된 게시글의 갯수를 구하는 쿼리문 -->
+	<select id="selectSearchCount" parameterType="string" resultType="_int">
+	<!--
+		SELECT COUNT(*)
+		  FROM BOARD
+		 WHERE BOARD_TITLE LIKE '%' || #{keyword} || '%'
+		   AND STATUS = 'Y'
+	-->
+		SELECT COUNT(*)
+		  FROM BOARD
+		 WHERE BOARD_TITLE LIKE CONCAT('%', #{keyword}, '%')
+		   AND STATUS = 'Y'
+	</select>
+	
+	<!-- 일반게시글 검색용 쿼리문 -->
+	<select id="selectSearchList" parameterType="string" resultMap="boardResultSet">
+	<!--
+		SELECT BOARD_NO
+			 , BOARD_TITLE
+			 , BOARD_WRITER
+			 , COUNT
+			 , CREATE_DATE
+			 , ORIGIN_NAME
+		  FROM BOARD
+		 WHERE STATUS = 'Y'
+		   AND BOARD_TITLE LIKE '%' || #{keyword} || '%'
+		 ORDER BY BOARD_NO DESC
+	-->
+		SELECT BOARD_NO
+			 , BOARD_TITLE
+			 , BOARD_WRITER
+			 , COUNT
+			 , CREATE_DATE
+			 , ORIGIN_NAME
+		  FROM BOARD
+		 WHERE STATUS = 'Y'
+		   AND BOARD_TITLE LIKE CONCAT('%', #{keyword}, '%')
+		 ORDER BY BOARD_NO DESC
+	</select>
+	
+	<!-- 게시글 작성용 쿼리문 -->
+	<insert id="insertBoard" parameterType="board">
+	<!--
+		INSERT INTO BOARD(BOARD_NO
+						, BOARD_TITLE
+						, BOARD_WRITER
+						, BOARD_CONTENT
+						, ORIGIN_NAME
+						, CHANGE_NAME)
+				   VALUES(SEQ_BNO.NEXTVAL
+						, #{boardTitle}
+						, #{boardWriter}
+						, #{boardContent}
+						, #{originName}
+						, #{changeName})
+	-->
+		INSERT INTO BOARD(BOARD_TITLE
+						, BOARD_WRITER
+						, BOARD_CONTENT
+						, ORIGIN_NAME
+						, CHANGE_NAME)
+				   VALUES(#{boardTitle}
+				   		, #{boardWriter}
+				   		, #{boardContent}
+				   		, #{originName}
+				   		, #{changeName})
+	</insert>
+	
+	<!-- 조회수 증가용 쿼리문 -->
+	<update id="increaseCount" parameterType="_int">
+		UPDATE BOARD
+		   SET COUNT = COUNT + 1
+		 WHERE BOARD_NO = #{boardNo}
+		   AND STATUS = 'Y'
+	</update>
+	
+	<!-- 일반게시글 상세조회용 쿼리문 -->
+	<select id="selectBoard" parameterType="_int" resultMap="boardResultSet">
+		SELECT BOARD_NO
+			 , BOARD_TITLE
+			 , BOARD_WRITER
+			 , BOARD_CONTENT
+			 , ORIGIN_NAME
+			 , CHANGE_NAME
+			 , CREATE_DATE
+		  FROM BOARD
+		 WHERE BOARD_NO = #{boardNo}
+		   AND STATUS = 'Y'
+	</select>
+	
+	<!-- 일반게시글 수정용 쿼리문 -->
+	<update id="updateBoard" parameterType="board">
+		UPDATE BOARD
+		   SET BOARD_TITLE = #{boardTitle}
+		   	 , BOARD_CONTENT = #{boardContent}
+		   	 , ORIGIN_NAME = #{originName}
+		   	 , CHANGE_NAME = #{changeName}
+		 WHERE BOARD_NO = #{boardNo}
+		   AND STATUS = 'Y'
+	</update>
+	
+	<!-- 일반게시글 삭제용 쿼리문 -->
+	<update id="deleteBoard" parameterType="_int">
+		UPDATE BOARD
+		   SET STATUS = 'N'
+		 WHERE BOARD_NO = #{boardNo}
+		   AND STATUS = 'Y'
+	</update>
+	
+</mapper>

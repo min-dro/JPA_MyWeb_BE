@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+  PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+  "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="memberMapper">
+	
+	<!--
+		MEMBER 테이블로부터 조회된 ResultSet 결과를
+		자바의 Member VO 클래스로 가공해주는 ResultMap
+	-->
+	<resultMap id="memberResultSet" type="member">
+		<id column="USER_ID" property="userId" />
+		<result column="USER_NAME" property="userName" />
+		<result column="EMAIL" property="email" />
+		<result column="GENDER" property="gender" />
+		<result column="AGE" property="age" />
+		<result column="ENROLL_DATE" property="enrollDate" />
+		<result column="STATUS" property="status" />
+		
+		<result column="PHONE" property="phone" />
+		<result column="ADDRESS" property="address" />
+	</resultMap>
+	
+	<!-- 회원 목록 조회용 쿼리문 -->
+	<select id="selectMemberList" resultMap="memberResultSet">
+		SELECT USER_ID
+			 , USER_NAME
+			 , EMAIL
+			 , GENDER
+			 , AGE
+			 , ENROLL_DATE
+			 , STATUS 
+		  FROM MEMBER
+		 WHERE USER_ID != 'admin'
+		 ORDER BY ENROLL_DATE ASC
+	</select>
+	
+	<!-- 회원 상세조회용 쿼리문 -->
+	<select id="selectMember" parameterType="string" resultMap="memberResultSet">
+		SELECT USER_ID
+			 , USER_NAME
+			 , EMAIL
+			 , GENDER
+			 , AGE
+			 , PHONE
+			 , ADDRESS
+			 , STATUS
+		  FROM MEMBER
+		 WHERE USER_ID = #{userId}
+	</select>
+	
+	<!-- 회원 정보 수정용 쿼리문 -->
+	<update id="updateMember" parameterType="member">
+	<!--
+		UPDATE MEMBER
+		   SET USER_NAME = #{userName}
+		     , EMAIL = #{email}
+		     , GENDER = #{gender}
+		     , AGE = #{age}
+		     , PHONE = #{phone}
+		     , ADDRESS = #{address}
+		     , MODIFY_DATE = SYSDATE
+		 WHERE USER_ID = #{userId}
+	-->
+		UPDATE MEMBER
+		   SET USER_NAME = #{userName}
+		     , EMAIL = #{email}
+		     , GENDER = #{gender}
+		     , AGE = #{age}
+		     , PHONE = #{phone}
+		     , ADDRESS = #{address}
+		     , MODIFY_DATE = CURRENT_TIMESTAMP
+		 WHERE USER_ID = #{userId}
+	</update>
+	
+	<!-- 회원 탈퇴용 쿼리문 -->
+	<update id="deleteMember" parameterType="string">
+	<!--
+		UPDATE MEMBER
+		   SET STATUS = 'N'
+		   	 , MODIFY_DATE = SYSDATE
+		 WHERE USER_ID = #{userId}
+		   AND STATUS = 'Y'
+	-->
+		UPDATE MEMBER 
+		   SET STATUS = 'N'
+		     , MODIFY_DATE = CURRENT_TIMESTAMP
+		 WHERE USER_ID = #{userId}
+		   AND STATUS = 'Y'
+	</update>
+	
+</mapper>
