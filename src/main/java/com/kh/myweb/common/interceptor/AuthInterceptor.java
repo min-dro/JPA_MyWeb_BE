@@ -5,6 +5,7 @@ import java.security.Key;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
@@ -23,6 +24,9 @@ import jakarta.servlet.http.HttpServletResponse;
 @Component // 이 클래스를 빈으로 등록하겠다.
 public class AuthInterceptor implements HandlerInterceptor {
 
+	@Value("${jwt.secret}")
+	public String secretKey;
+	
 	// AuthService 도 의존성 주입으로 객체를 받아내야함
 	@Autowired
 	private AuthService authService;
@@ -64,7 +68,7 @@ public class AuthInterceptor implements HandlerInterceptor {
 			// 이 추출해낸 문자열 형태의 jwt 를 가지고 대조 작업 진행
 			
 			// 1. JWT 발급 시 썼었던 비밀 키를 똑같은 형태의 Key 객체로 만들기
-			Key key = Keys.hmacShaKeyFor(AuthController.SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+			Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
 			// > 발급 시 암호화했었을 때 썼던 키를 검증 시 복호화할 때에도 똑같이 쓴다!!
 			//   "양방향" 암호화 방식 : 암호화 + 복호화 둘 다 가능한 방식
 			//   그 중에서도 암호화, 복호화 둘 다 가능한 방식

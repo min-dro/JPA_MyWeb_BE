@@ -5,6 +5,7 @@ import java.security.Key;
 import java.util.Date;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -23,9 +24,12 @@ import io.jsonwebtoken.security.Keys;
 @CrossOrigin
 @RestController
 public class AuthController {
-
-	// 비밀키를 전역 변수 겸 상수 필드로 빼기
-	public static final String SECRET_KEY = "Hello123KHAcademy456Gangnam789WelcomeToHClass0";
+	
+	@Value("${jwt.secret}")
+	public String secretKey;
+	// > 기존에 대놓고 하드코딩했었던 비밀키를 지웠고, 상수필드에서 일반필드로 바꿈 (private)
+	// > @Value 어노테이션을 이용해서 application.properties 에 설정했던
+	//   환경변수값을 불러와서 이 필드에 담아준다!!
 	
 	@Autowired
 	private AuthService authService;
@@ -111,7 +115,7 @@ public class AuthController {
 			//   보통은 전역 변수 보다는 별도의 설정파일로 담아뒀다가 동적 코딩 방식으로 불러다가 쓴다.
 			
 			// 2. 문자열 타입의 비밀 키를 서명을 위한 Key 형태의 객체로 가공 (JWT 라이브러리에서 제공)
-			Key key = Keys.hmacShaKeyFor(SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+			Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
 			// > 문자열을 이루고 있는 글자들은 byte 단위로 하나씩 글자 하나하나로 쪼개서 (이 때 UTF-8 형식으로)
 			//   byte 배열에 옮겨담은 후, 이걸 가지고 HMAC-SHA 알고리즘 종류 기반으로 Key 를 만들겠다.
 			

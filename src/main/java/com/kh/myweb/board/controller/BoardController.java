@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.data.domain.Page;
@@ -48,6 +49,9 @@ import jakarta.servlet.http.HttpSession;
 @RestController
 public class BoardController {
 
+	@Value("${jwt.secret}")
+	public String secretKey;
+	
 	@Autowired
 	private BoardService boardService;
 	
@@ -169,8 +173,7 @@ public class BoardController {
 		String authHeader = request.getHeader("Authorization");
 		String jwtTokenString = authHeader.substring(7);
 		
-		Key key = Keys.hmacShaKeyFor(AuthController.SECRET_KEY
-										.getBytes(StandardCharsets.UTF_8));
+		Key key = Keys.hmacShaKeyFor(secretKey.getBytes(StandardCharsets.UTF_8));
 		
 		Claims claims = Jwts.parserBuilder()
 							.setSigningKey(key)
@@ -398,7 +401,7 @@ public class BoardController {
 		String authHeader = request.getHeader("Authorization");
 		String jwtTokenString = authHeader.substring(7);
 		
-		Key key = Keys.hmacShaKeyFor(AuthController.SECRET_KEY
+		Key key = Keys.hmacShaKeyFor(secretKey
 										.getBytes(StandardCharsets.UTF_8));
 		
 		Claims claims = Jwts.parserBuilder()
@@ -430,7 +433,7 @@ public class BoardController {
 		String authHeader = request.getHeader("Authorization");
 		String jwtTokenString = authHeader.substring(7);
 		
-		Key key = Keys.hmacShaKeyFor(AuthController.SECRET_KEY
+		Key key = Keys.hmacShaKeyFor(secretKey
 										.getBytes(StandardCharsets.UTF_8));
 		
 		Claims claims = Jwts.parserBuilder()

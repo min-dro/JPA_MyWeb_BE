@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
@@ -32,6 +33,9 @@ import jakarta.servlet.http.HttpServletRequest;
 @RestController
 public class NoticeController {
 
+	@Value("${jwt.secret}")
+	public String secretKey;
+	
 	@Autowired
 	private NoticeService noticeService;
 	
@@ -69,7 +73,7 @@ public class NoticeController {
 		
 		// 위의 jwtTokenString 을 파싱하기
 		Key key = Keys.hmacShaKeyFor(
-						AuthController.SECRET_KEY.getBytes(StandardCharsets.UTF_8));
+						secretKey.getBytes(StandardCharsets.UTF_8));
 		
 		Claims claims = Jwts.parserBuilder()
 							.setSigningKey(key)
