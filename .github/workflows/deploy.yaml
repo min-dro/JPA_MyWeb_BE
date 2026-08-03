@@ -1,0 +1,104 @@
+# JPA_MyWeb_BE 프로젝트를 CI/CD 할 것!! (GitHub Actions 이용)
+# Workflow 흐름
+# main push -> JAR 로 빌드 (JSP 가 없으므로) -> EC2 로 전송 -> 환경변수 셋팅 -> JAR 실행
+
+# -----------------------------------------------------------------------------------
+
+# 이 Workflow 의 이름
+name: Deploy JAR
+
+# 언제 실행할건지에 대한 조건 (main 브랜치에 push 될 때 CI/CD 작업을 하겠다)
+on:
+  push:
+    branches: [ main ]
+
+# 순차적으로 실행할 작업을 정의 (job)
+jobs:
+  deploy:                       # 작업명 (아무거나 작성)
+    runs-on: ubuntu-latest      # 빌드용 컴퓨터를 GitHub 로 부터 한대 빌려옴 (ubuntu 최신버전)
+                                # Jenkins 라는 툴에서는 Jenkins 서버 역할
+
+    steps:
+      # 1단계 : 내 소스코드를 빌드용 컴퓨터로 내보내기 (Checkout)
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2단계 : 빌드용 컴퓨터에 JDK21 설치 (빌드 시 필요, 개발 떄 썼던 버전과 맞추기)
+      - name: Set up JDK21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: maven
+
+      # 3단계 : Maven 으로 JAR 빌드
+      - name: Build JAR with Maven
+        run: mvn clean package -DskipTests
+        # -DskipTests : 빌드 전 테스트를 건너 뛰겠다.
+        #               이제는 소스코드 상에 환경변수 자리를 다 구멍으로 뚫어놓았기 때문에
+        #               어차피 빌드 전 테스트 단계에서 오류가 발생할것!! (빌드가 제대호 안됨)
+        #               (밑에서 환경변수 셋팅으로 제대로 jar 를 실행시킨다는 가정 하에)
+      
+      # ----- 여기까지가 CI (지속적인 통합 : 소스코드를 지속적으로 통합 후 빌드까지) -----
+
+      # ----- 아래부터는 CD (지속적인 배포 : 자동으로 배포되게끔 EC2 접속 후 리눅스 명령문 작성) -----
+
+      # 4단계 : JAR 를 EC2 로 전송 (파일 전송 시에는 scp 명령문 이용)
+      - name: Copy JAR to EC2
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.EC2_HOST }}         # 어디로 보낼건지
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}           # 비밀키 정보
+          source: "target/*.jar"                # 전송할 파일 정보
+          target: "home/ubuntu/upload"          # 파일이 저장될 도착지 경로
+                                                # /home/ubuntu/upload/target/xxx.jar
+          stripe_components: 1                  # 폴더를 한겹 빠져나오겠다.
+                                                # /home/ubuntu/upload/xxx.jar
+
+      # 5단계 : EC2 접속해서 (ssh 명령문 이용) 환경변수 셋팅 후 JAR 실행
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}         # 어디로 접속할건지
+          username: ubuntu
+          key: ${{ secrets.EC2_KEY }}           # 비밀키 정보
+          # --- 여기까지가 접속 정보 ---
+
+          # --- 아래에서 부터는 접속 후 어떤 명령문을 실행할건지 적는 부분
+          # 리눅스 명령문들이 순차적으로 실행되서 어떤 작업을 자동으로 할 수 있도록 도와주는 개념
+          # 명령문들을 순차적으로 실행되게끔 적어주는 개념 : Batch (배치) - Windows 계열 용어
+          # ubuntu (Linux 계열) 에서는 Shell Script 또는 Bash Script 라고 부른다.
+          script: |
+
+            # 1) 올라온 jar 파일명을 myweb.jar 로 변경
+            sudo mv /home/ubuntu/upload/*.jar /home/ubuntu/upload/myweb.jar
+
+            # 2) 실행용 폴더로 복사
+            sudo mkdir -p /home/ubuntu/app
+            sudo cp /home/ubuntu/upload/myweb.jar /home/ubuntu/app/myweb.jar
+
+            # 3) upload 폴더 정리
+            sudo rm -f /home/ubuntu/upload/*.jar
+
+            # 4) 실행 폴더로 이동
+            sudo cd /home/ubuntu/app
+
+            # 5) 기존에 돌던 프로세스 종료
+            if [ -f myweb.pid ]; then
+              kill "$(cat myweb.pid)" 2>/dev/null || true
+              sleep 3
+            fi
+
+            # 6) 환경변수 셋팅 (application.properties 의 ${변수명} 을 채우는 것)
+            # Secrets 에 DB_HOST, DB_USERNAME, DB_PASSWORD, JWT_SECRET 등록했었음!!
+            export DB_HOST='${{ secrets.DB_HOST }}'
+            export DB_USERNAME='${{ secrets.DB_USERNAME }}'
+            export DB_PASSWORD='${{ secrets.DB_PASSWORD }}'
+            export JWT_SECRET='${{ secrets.JWT_SECRET }}'
+            # export 라는 명령을 이용해서 환경변수를 셋팅한다!!
+            # 이렇게 셋팅한 환경변수는 jar 파일 실행 시 별도의 옵션 없이 실행하더라도
+            # 알아서 프로그램 상의 셋팅값으로 잡히게 됨!!
+
+            # 7) jar 실행
+            setsid nohup java -jar /home/ubuntu/app/myweb.jar > log.txt 2>&1 < /dev/null &
